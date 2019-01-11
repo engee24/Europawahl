@@ -1,5 +1,5 @@
-library("stringi", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resources/library")
-library("stringr", lib.loc="/Library/Frameworks/R.framework/Versions/3.2/Resources/library")
+library("stringi", lib.loc="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
+library("stringr", lib.loc="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
 
 #............................................Gemeindedaten.........................................
 gemeinde <- read.csv("gemeinde.csv", stringsAsFactors = FALSE, colClasses = c(rep("character",14)))
@@ -158,21 +158,9 @@ master.numeric <- within(master.numeric, rm("arbeitslos.15bis20", "X.y"))
 arbeitslos.num <- c("arbeitslos.ausld", "arbeitslos15bis25", "arbeitslos.55bis65", "arbeitslos.langzeit")
 master.numeric[, arbeitslos.num] <- sapply(master.numeric[, arbeitslos.num], as.numeric)
 
-arbeitslos.na <- c("arbeitslos.ausld", "arbeitslos15bis25", "arbeitslos.55bis65")
-
-al.fun <- function(x){
-  if(master.numeric$arbeitslos.gsamt == 0){
-    y <- master.numeric[arbeitslos.na][is.na(master.numeric[arbeitslos.na])] <- 0
-  }
-  else{
-    x <- y
-  }
-  return(y)
-}
-
-#die custom function gibt einen fehler und eine warnmeldung aber sie macht das was ich will also ist alles in ordnung
-
-master.numeric[, arbeitslos.na] <- sapply(master.numeric[, arbeitslos.na], al.fun)
+master.numeric$arbeitslos.ausld <- ifelse(master.numeric$arbeitslos.gsamt==0, 0,master.numeric$arbeitslos.ausld)
+master.numeric$arbeitslos15bis25 <- ifelse(master.numeric$arbeitslos.gsamt==0, 0,master.numeric$arbeitslos15bis25)
+master.numeric$arbeitslos.55bis65 <- ifelse(master.numeric$arbeitslos.gsamt==0, 0,master.numeric$arbeitslos.55bis65)
 
 # Muss das Bittburger Land noch raus?
 
@@ -203,11 +191,11 @@ master.numeric$Wahlbeteiligung.btw <- as.numeric(gsub(",","\\.", master.numeric$
 #NAs durch fehlende Wahldaten erzeugt -> macht bei der Analyse keinen Unterschied (hoffentlich)
 subset(master.numeric$Name, is.na(master.numeric$Wahlbeteiligung.btw))
 
-# Die Tabelle wird als CSV Datei exportiert
+# Die Tabelle wird als CSV Datei exportiert -> brauchen wir eigentlich nicht mehr
 
-write.csv(master.numeric, "master.numeric.csv")
+#write.csv(master.numeric, "master.numeric.csv")
 
-#Zusätzliche Variablen als Prozent (noch schöner coden)
+#Zus?tzliche Variablen als Prozent (noch sch?ner coden)
 
 master.numeric$Arbeitslos_Prozent <- (master.numeric$arbeitslos.gsamt/ master.numeric$insgesamt)*100
 master.numeric$Arbeitslos.ausld_Prozent <- (master.numeric$arbeitslos.ausld/ master.numeric$insgesamt)*100
@@ -216,7 +204,7 @@ master.numeric$Arbeitslos.15bis25_Prozent <- (master.numeric$arbeitslos15bis25/ 
 master.numeric$Arbeitslos.55bis65_Prozent <- (master.numeric$arbeitslos.55bis65/ master.numeric$insgesamt)*100
 master.numeric$Arbeitslos.langzeit_Prozent <- (master.numeric$arbeitslos.langzeit/ master.numeric$insgesamt)*100
 
-master.numeric$männlich_Prozent <- (master.numeric$maennlich/ master.numeric$insgesamt)*100
+master.numeric$maennlich_Prozent <- (master.numeric$maennlich/ master.numeric$insgesamt)*100
 master.numeric$weiblich_Prozent <- (master.numeric$weiblich/ master.numeric$insgesamt)*100
 
 master.numeric$unter3_prozent <- (master.numeric$Insgesamt..unter.3.Jahre/ master.numeric$Insgesamt)*100
@@ -227,21 +215,21 @@ master.numeric$unter3_prozent <- prozent(master.numeric$Insgesamt..unter.3.Jahre
 master.numeric$dreibis6_prozent <- prozent(master.numeric$Insgesamt..3.bis.unter.6.Jahre)
 master.numeric$sechsbis10_prozent <- prozent(master.numeric$Insgesamt..6.bis.unter.10.Jahre)
 master.numeric$zehnbis15_prozent <- prozent(master.numeric$Insgesamt..10.bis.unter.15.Jahre)
-master.numeric$fühnzehnbis18_prozent <- prozent(master.numeric$Insegsamt..15.bis.unter.18.Jahre)
+master.numeric$fuehnzehnbis18_prozent <- prozent(master.numeric$Insegsamt..15.bis.unter.18.Jahre)
 master.numeric$achtzehnbis20_prozent <- prozent(master.numeric$Insgesamt..18.bis.unter.20.Jahre)
 master.numeric$zwanzigbis25_prozent <- prozent(master.numeric$Insgesamt.20.bis.unter.25.Jahre)
-master.numeric$fünfundzwanzigbis30_prozent <- prozent(master.numeric$Insgesamt..25.bis.unter.30.Jahre)
-master.numeric$dreißigbis35_prozent <- prozent(master.numeric$Insgesamt..30.bis.unter.35.Jahre)
-master.numeric$fünfunddreißigbis40_prozent <- prozent(master.numeric$Insgesamt.35.bis.unter.40.Jahre)
+master.numeric$fuenfundzwanzigbis30_prozent <- prozent(master.numeric$Insgesamt..25.bis.unter.30.Jahre)
+master.numeric$dreissigbis35_prozent <- prozent(master.numeric$Insgesamt..30.bis.unter.35.Jahre)
+master.numeric$fuenfunddreissigbis40_prozent <- prozent(master.numeric$Insgesamt.35.bis.unter.40.Jahre)
 master.numeric$vierzigbis45_prozent <- prozent(master.numeric$Insgesamt..40.bis.unter.45.Jahre)
-master.numeric$fünfundvierzigbis50_prozent <- prozent(master.numeric$Insgesamt..40.bis.unter.45.Jahre)
-master.numeric$fünfzigbis55_prozent <- prozent(master.numeric$Insgesamt..50.bis.unter.55.Jahre)
-master.numeric$fünfundfünzigbis60_prozent <- prozent(master.numeric$Insgesamt..55.bis.unter.60.Jahre)
+master.numeric$fuenfundvierzigbis50_prozent <- prozent(master.numeric$Insgesamt..40.bis.unter.45.Jahre)
+master.numeric$fuenfzigbis55_prozent <- prozent(master.numeric$Insgesamt..50.bis.unter.55.Jahre)
+master.numeric$fuenfundfuenzigbis60_prozent <- prozent(master.numeric$Insgesamt..55.bis.unter.60.Jahre)
 master.numeric$sechzigbis65_prozent <- prozent(master.numeric$Insgesamt..60.bis.unter.65.Jahre)
-master.numeric$fünfundsechzigbis75_prozent <- prozent(master.numeric$Insgesamt..65.bis.unter.75.Jahre)
-master.numeric$über75_prozent <- prozent(master.numeric$Insgesamt..75.Jahre.und.mehr)
+master.numeric$fuenfundsechzigbis75_prozent <- prozent(master.numeric$Insgesamt..65.bis.unter.75.Jahre)
+master.numeric$ueber75_prozent <- prozent(master.numeric$Insgesamt..75.Jahre.und.mehr)
 
-master.numeric$minderjährig_prozent <- master.numeric$unter3_prozent + master.numeric$sechsbis10_prozent+master.numeric$zehnbis15_prozent + master.numeric$fühnzehnbis18_prozent
+master.numeric$minderjaehrig_prozent <- master.numeric$unter3_prozent + master.numeric$sechsbis10_prozent+master.numeric$zehnbis15_prozent + master.numeric$fuehnzehnbis18_prozent
 
 
 
@@ -265,7 +253,7 @@ master.numeric2 = na.exclude(master.numeric)
 
 #normaler tree test
 
-tree.wahlbeteiligung = tree(Wahlbeteiligung..Prozent.~ flaeche + insgesamt + weiblich_Prozent + männlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent, data=master.numeric) 
+tree.wahlbeteiligung = tree(Wahlbeteiligung..Prozent.~ flaeche + insgesamt + weiblich_Prozent + m?nnlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent, data=master.numeric) 
 summary(tree.wahlbeteiligung)
 
 plot(tree.wahlbeteiligung)
@@ -278,7 +266,7 @@ text(tree.wahlbeteiligung, pretty =0)
 sample.wahlbeteiligung <- sample(1:nrow(master.numeric2),nrow(master.numeric2)/2)
 
 
-rf.wahlbeteiligung = randomForest(Wahlbeteiligung..Prozent.~ flaeche + insgesamt  + weiblich_Prozent + männlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderjährig_prozent + über75_prozent, data= master.numeric2, subset = sample.wahlbeteiligung)
+rf.wahlbeteiligung = randomForest(Wahlbeteiligung..Prozent.~ flaeche + insgesamt  + weiblich_Prozent + m?nnlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderj?hrig_prozent + ?ber75_prozent, data= master.numeric2, subset = sample.wahlbeteiligung)
 
 #testen auf testdaten
 yhat.rf = predict(rf.wahlbeteiligung, newdata = master.numeric[-sample.wahlbeteiligung,])
