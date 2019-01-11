@@ -1,5 +1,5 @@
-library("stringi", lib.loc="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
-library("stringr", lib.loc="/Library/Frameworks/R.framework/Versions/3.5/Resources/library")
+library("stringi")
+library("stringr")
 
 #............................................Gemeindedaten.........................................
 gemeinde <- read.csv("gemeinde.csv", stringsAsFactors = FALSE, colClasses = c(rep("character",14)))
@@ -107,9 +107,9 @@ master3 <- merge(master1, master2, by.x=c("rsnew"), by.y = c("Schluessel"))
 #..........................................................Master gemerged..................................
 master <- merge(wahl, master3, by.x=c("Schluessel"), by.y = c("rsnew"))
 
-master <- master[,-c(2,14,18,23,24,25,26,27)]
-sum(master$insgesamt)
-master.numeric <- master
+master.numeric <- master[,-c(2,14,18,23,24,25,26,27)]
+
+#Muss noch eleganter gelöst werden.
 master.numeric$Wahlberechtigte..Anzahl. <- as.numeric(master.numeric$Wahlberechtigte..Anzahl.)
 master.numeric$Wahlbeteiligung..Prozent. <- as.numeric(gsub(",","\\.", master.numeric$Wahlbeteiligung..Prozent.))
 master.numeric$Gueltige.Stimmen..Anzahl. <- as.numeric(master.numeric$Gueltige.Stimmen..Anzahl.)
@@ -197,17 +197,16 @@ subset(master.numeric$Name, is.na(master.numeric$Wahlbeteiligung.btw))
 
 #Zus?tzliche Variablen als Prozent (noch sch?ner coden)
 
-master.numeric$Arbeitslos_Prozent <- (master.numeric$arbeitslos.gsamt/ master.numeric$insgesamt)*100
-master.numeric$Arbeitslos.ausld_Prozent <- (master.numeric$arbeitslos.ausld/ master.numeric$insgesamt)*100
-master.numeric$Arbeitslos.15bis20_Prozent <- (master.numeric$arbeitslos.15bis20/ master.numeric$insgesamt)*100
-master.numeric$Arbeitslos.15bis25_Prozent <- (master.numeric$arbeitslos15bis25/ master.numeric$insgesamt)*100
-master.numeric$Arbeitslos.55bis65_Prozent <- (master.numeric$arbeitslos.55bis65/ master.numeric$insgesamt)*100
-master.numeric$Arbeitslos.langzeit_Prozent <- (master.numeric$arbeitslos.langzeit/ master.numeric$insgesamt)*100
+prozent1 <- function(x){(x/master.numeric$insgesamt) * 100}
 
-master.numeric$maennlich_Prozent <- (master.numeric$maennlich/ master.numeric$insgesamt)*100
-master.numeric$weiblich_Prozent <- (master.numeric$weiblich/ master.numeric$insgesamt)*100
-
-master.numeric$unter3_prozent <- (master.numeric$Insgesamt..unter.3.Jahre/ master.numeric$Insgesamt)*100
+master.numeric$Arbeitslos_Prozent <- prozent1(master.numeric$arbeitslos.gsamt)
+master.numeric$Arbeitslos.ausld_Prozent <- (master.numeric$arbeitslos.ausld)
+master.numeric$Arbeitslos.15bis20_Prozent <- (master.numeric$arbeitslos.15bis20)
+master.numeric$Arbeitslos.15bis25_Prozent <- (master.numeric$arbeitslos15bis25)
+master.numeric$Arbeitslos.55bis65_Prozent <- (master.numeric$arbeitslos.55bis65)
+master.numeric$Arbeitslos.langzeit_Prozent <- (master.numeric$arbeitslos.langzeit)
+master.numeric$maennlich_Prozent <- (master.numeric$maennlich)
+master.numeric$weiblich_Prozent <- (master.numeric$weiblich)
 
 prozent <-function(x){(x/master.numeric$Insgesamt) * 100}
 
@@ -241,8 +240,8 @@ master.numeric$minderjaehrig_prozent <- master.numeric$unter3_prozent + master.n
 
 #alles laden
 
-install.packages("randomForest")
-install.packages("tree")
+#install.packages("randomForest")
+#install.packages("tree")
 
 library(randomForest)
 library(tree)
@@ -253,7 +252,7 @@ master.numeric2 = na.exclude(master.numeric)
 
 #normaler tree test
 
-tree.wahlbeteiligung = tree(Wahlbeteiligung..Prozent.~ flaeche + insgesamt + weiblich_Prozent + m?nnlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent, data=master.numeric) 
+tree.wahlbeteiligung = tree(Wahlbeteiligung..Prozent.~ flaeche + insgesamt + weiblich_Prozent + maennlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent, data=master.numeric) 
 summary(tree.wahlbeteiligung)
 
 plot(tree.wahlbeteiligung)
@@ -266,7 +265,7 @@ text(tree.wahlbeteiligung, pretty =0)
 sample.wahlbeteiligung <- sample(1:nrow(master.numeric2),nrow(master.numeric2)/2)
 
 
-rf.wahlbeteiligung = randomForest(Wahlbeteiligung..Prozent.~ flaeche + insgesamt  + weiblich_Prozent + m?nnlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderj?hrig_prozent + ?ber75_prozent, data= master.numeric2, subset = sample.wahlbeteiligung)
+rf.wahlbeteiligung = randomForest(Wahlbeteiligung..Prozent.~ flaeche + insgesamt  + weiblich_Prozent + maennlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderjaehrig_prozent + ueber75_prozent, data= master.numeric2, subset = sample.wahlbeteiligung)
 
 #testen auf testdaten
 yhat.rf = predict(rf.wahlbeteiligung, newdata = master.numeric[-sample.wahlbeteiligung,])
