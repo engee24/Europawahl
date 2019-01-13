@@ -20,10 +20,10 @@ test <- function(x){
   if(nchar(x) < 8){
     y <- 0
   }
-    else {
-      y <- x
-    }
-    return(y)
+  else {
+    y <- x
+  }
+  return(y)
 }
 arbeit$rsnew <- sapply(arbeit$schluessel, test)
 arbeit <- arbeit[arbeit$rsnew != 0,] 
@@ -65,7 +65,7 @@ funwahl <- function(x){
     y <- x
   }
   if(nchar(x) == 9){
-     y <- paste0("0",x)
+    y <- paste0("0",x)
     
   }
   if(nchar(x)== 7){
@@ -230,10 +230,28 @@ master.numeric$ueber75_prozent <- prozent(master.numeric$Insgesamt..75.Jahre.und
 
 master.numeric$minderjaehrig_prozent <- master.numeric$unter3_prozent + master.numeric$sechsbis10_prozent+master.numeric$zehnbis15_prozent + master.numeric$fuehnzehnbis18_prozent
 
+#Parteien % Landtagswahl
+
+master.numeric$Union_Prozent <- (master.numeric$Gueltige.Stimmen..CDU.CSU./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+master.numeric$SPD_Prozent <-(master.numeric$Gueltige.Stimmen..SPD./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+master.numeric$Gruene_Prozent <- (master.numeric$Gueltige.Stimmen..Gruene./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+master.numeric$FDP_Prozent <- (master.numeric$Gueltige.Stimmen..FDP./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+master.numeric$Linke_Prozent <- (master.numeric$Gueltige.Stimmen..Die.Linke./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+master.numeric$AfD_Prozent <- (master.numeric$Gueltige.Stimmen..AfD./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+master.numeric$Sonstige_Prozent <- (master.numeric$Gueltige.Stimmen..Sonstige./ master.numeric$Gueltige.Stimmen..Anzahl.)*100
+
+#Parteien % BTW
+
+prozent_btw <-function(x){(x/master.numeric$Gueltige.Zweitstimmen.btw) * 100}
 
 
-
-
+master.numeric$Union_Prozent_btw <- prozent_btw(master.numeric$CDU.CSU.btw)
+master.numeric$SPD_Prozent_btw <- prozent_btw(master.numeric$SPD.btw)
+master.numeric$Gruene_Prozent_btw <- prozent_btw(master.numeric$GRUENE.btw)
+master.numeric$FDP_Prozent_btw <- prozent_btw(master.numeric$FDP.btw)
+master.numeric$Linke_Prozent_btw <- prozent_btw(master.numeric$LINKE.btw)
+master.numeric$AfD_Prozent_btw <- prozent_btw(master.numeric$AfD.btw)
+master.numeric$Sonstige_Prozent_btw <- prozent_btw(master.numeric$Sonstige.Parteien.btw)
 
 
 #------------------------------Random forest starting now-------------------------------
@@ -242,6 +260,8 @@ master.numeric$minderjaehrig_prozent <- master.numeric$unter3_prozent + master.n
 
 #install.packages("randomForest")
 #install.packages("tree")
+
+
 
 library(randomForest)
 library(tree)
@@ -258,7 +278,7 @@ summary(tree.wahlbeteiligung)
 plot(tree.wahlbeteiligung)
 text(tree.wahlbeteiligung, pretty =0)
 
-#random forest
+#random forest.......................Wahlbeteiligung.................................
 
 #subset als training data 
 
@@ -268,11 +288,11 @@ sample.wahlbeteiligung <- sample(1:nrow(master.numeric2),nrow(master.numeric2)/2
 rf.wahlbeteiligung = randomForest(Wahlbeteiligung..Prozent.~ flaeche + insgesamt  + weiblich_Prozent + maennlich_Prozent + Wahlbeteiligung.btw + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderjaehrig_prozent + ueber75_prozent, data= master.numeric2, subset = sample.wahlbeteiligung)
 
 #testen auf testdaten
-yhat.rf = predict(rf.wahlbeteiligung, newdata = master.numeric[-sample.wahlbeteiligung,])
-wahlbeteiligung_test = master.numeric [-sample.wahlbeteiligung, "Wahlbeteiligung..Prozent."]
+yhat.rf = predict(rf.wahlbeteiligung, newdata = master.numeric2[-sample.wahlbeteiligung,])
+wahlbeteiligung_test = master.numeric2 [-sample.wahlbeteiligung, "Wahlbeteiligung..Prozent."]
 plot(yhat.rf, wahlbeteiligung_test)
 abline(0,1)
-mean((yhat.rf - wahlbeteiligung_test)^2) #geht irgendwie nicht :( sollte MSE sein
+mean((yhat.rf - wahlbeteiligung_test)^2)  #MSE, durchschnittlich 7% Fehler
 
 
 importance(rf.wahlbeteiligung)
@@ -280,6 +300,58 @@ importance(rf.wahlbeteiligung)
 plot(rf.wahlbeteiligung)
 
 varImpPlot(rf.wahlbeteiligung)
+
+#random forest.......................Stimmen Union.....................
+
+#gleiches subset wie oben, Random Forest machen
+
+
+rf.union = randomForest( Union_Prozent ~ flaeche + insgesamt + maennlich_Prozent + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderjaehrig_prozent + ueber75_prozent + Union_Prozent_btw, data= master.numeric2, subset = sample.wahlbeteiligung)
+
+#testen auf testdaten
+yhat.rf_union = predict(rf.union, newdata = master.numeric2[-sample.wahlbeteiligung,])
+union_test = master.numeric2 [-sample.wahlbeteiligung, "Union_Prozent"]
+plot(yhat.rf_union, union_test)
+abline(0,1)
+MSE_union <- mean((yhat.rf_union - union_test)^2)  #MSE 
+sqrt(MSE_union)#durchschnittlicher Fehler von 5%
+
+importance(rf.union)
+
+varImpPlot(rf.union)
+
+#SPD
+
+rf.spd = randomForest( SPD_Prozent ~ flaeche + insgesamt + maennlich_Prozent + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderjaehrig_prozent + ueber75_prozent + SPD_Prozent_btw, data= master.numeric2, subset = sample.wahlbeteiligung)
+
+yhat.rf_spd = predict(rf.spd, newdata = master.numeric2[-sample.wahlbeteiligung,])
+spd_test = master.numeric2 [-sample.wahlbeteiligung, "SPD_Prozent"]
+plot(yhat.rf_spd, spd_test)
+abline(0,1)
+MSE_spd <- mean((yhat.rf_spd - spd_test)^2)  #MSE 
+sqrt(MSE_spd)#durchschnittlicher Fehler von 4%
+
+importance(rf.spd)
+
+varImpPlot(rf.spd)
+
+#Grüne
+
+rf.gruene = randomForest( Gruene_Prozent ~ flaeche + insgesamt + maennlich_Prozent + Arbeitslos.langzeit_Prozent + Arbeitslos.55bis65_Prozent + Arbeitslos.15bis25_Prozent + Arbeitslos.ausld_Prozent + minderjaehrig_prozent + ueber75_prozent + Gruene_Prozent_btw, data= master.numeric2, subset = sample.wahlbeteiligung)
+
+yhat.rf_gruene = predict(rf.gruene, newdata = master.numeric2[-sample.wahlbeteiligung,])
+gruene_test = master.numeric2 [-sample.wahlbeteiligung, "Gruene_Prozent"]
+plot(yhat.rf_gruene, gruene_test)
+abline(0,1)
+MSE_gruene <- mean((yhat.rf_gruene - gruene_test)^2)  #MSE 
+sqrt(MSE_gruene)#durchschnittlicher Fehler von 2%
+
+importance(rf.gruene)
+
+varImpPlot(rf.gruene)
+
+#man könnte vielleicht noch die prozentzahlen der anderen Parteien in den rf aufnehmen?
+
 
 
 
