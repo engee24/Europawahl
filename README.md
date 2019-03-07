@@ -6,6 +6,4 @@ Im Rahmen des Projektseminars Political Data Science haben wir uns es zur Aufgab
 
 *Hauptquelle für das Projekt ist das [Gemeinsame Statistikportal der statistischen Ämter der Länder](https://www.statistikportal.de)*
 
-*Quellen der weiteren Datensätze werden im Wiki vermerkt*
-
 *Stand: 11.01.2019*
